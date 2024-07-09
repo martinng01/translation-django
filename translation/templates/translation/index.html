@@ -28,7 +28,6 @@
           style="min-height:200px; resize: none;"></textarea><br />
         <button class="btn btn-primary float-end" id="submit-translate">Translate</button>
         <button class="btn btn-primary float-start" id="clear-text">Clear text</button>
-
       </div>
       <div class="col">
         <p class="text-start px-3 my-2 fw-medium"><u>Malay</u></p>
@@ -100,10 +99,11 @@
       if (query === '') {
         document.getElementById('translation-placeholder').hidden = false
         return
-      } else {
-        document.getElementById('translation-placeholder').hidden = true
-        document.getElementById('translation-loading').hidden = false
       }
+
+      document.getElementById('translation-placeholder').hidden = true
+      document.getElementById('translation-loading').hidden = false
+      document.getElementById('clear-text').disabled = true
 
       fetch('/', {
         method: 'POST',
@@ -115,9 +115,18 @@
       })
         .then(response => response.json())
         .then(data => {
+          document.getElementById('clear-text').disabled = false
           document.getElementById('translation-loading').hidden = true
           document.getElementById('translation').innerText = data.translation
         })
+    }
+
+    const handleClearText = () => {
+      document.getElementById('text').value = ''
+      document.getElementById('translation').innerText = ''
+      document.getElementById('translation-placeholder').hidden = false
+
+      handleTextAreaHeights()
     }
 
     const handleTextAreaHeights = () => {
@@ -135,6 +144,7 @@
       translationArea.style.height = height + 'px';
     }
 
+    document.getElementById('clear-text').addEventListener('click', handleClearText);
     document.getElementById('text').addEventListener('input', handleTextAreaHeights);
     document.getElementById('submit-translate').addEventListener('click', handleTextInput);
   </script>
