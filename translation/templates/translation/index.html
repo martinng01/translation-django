@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Translation Website</title>
+  <link rel="stylesheet" type="text/css" href="https://bootswatch.com/5/lux/bootstrap.min.css" />
+</head>
+
+<body>
+  <div id="loadingScreen" style="display: none" class="d-flex justify-content-center align-items-center vh-100">
+    <div class="text-center w-75">
+      <h4 id="loadingMessage">Initializing...</h4>
+      <!-- Bootstrap Progress Bar -->
+      <div class="progress mt-3" role="progressbar" aria-label="Initializing..." aria-valuenow="0" aria-valuemin="0"
+        aria-valuemax="100">
+        <div id="loadingProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+          style="width: 0%"></div>
+      </div>
+    </div>
+  </div>
+  <div id="container" class="container px-4 py-3 text-center" style="display: none">
+    <div class="row mt-5">
+      <div class="col">
+        <!-- TODO: Clear Button -->
+        <p class="text-start px-3 my-2 fw-medium"><u>English</u></p>
+        <textarea class="form-control" id="text" placeholder="Enter text here"
+          style="min-height: 200px; max-height:500px; resize: none;"></textarea><br />
+        <button class="btn btn-primary float-end" id="submit-translate">Translate</button>
+      </div>
+      <div class="col">
+        <p class="text-start px-3 my-2 fw-medium"><u>Malay</u></p>
+        <div id="translation-div" class="form-control text-start"
+          style="min-height: 200px; max-height: 500px; resize: none; overflow-y:auto">
+          <p id="translation-placeholder">Translation</p>
+          <div hidden id="translation-loading">
+            <div class="spinner-grow spinner-grow-sm mx-1" style="width: 0.8rem; height: 0.8rem;"></div>
+            <div class="spinner-grow spinner-grow-sm mx-1" style="width: 0.8rem; height: 0.8rem;"></div>
+            <div class="spinner-grow spinner-grow-sm mx-1" style="width: 0.8rem; height: 0.8rem;"></div>
+          </div>
+          <p id="translation"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var progress_n = 0;
+    function buildDatabase() {
+      fetch('/build_db/')
+        .then(() => {
+          // Start checking the database status every 2 seconds
+          const interval = setInterval(() => {
+            fetch('/db_status/')
+              .then(response => response.json())
+              .then(data => {
+                if (data.exists) {
+                  clearInterval(interval);
+                  document.getElementById('loadingScreen').style = 'display: none!important';
+                  document.getElementById('container').style = '';
+                } else {
+                  // Update progress bar and message
+                  const progressBar = document.getElementById('loadingProgressBar');
+                  const progressMessages = [
+                    "Fetching Flores-200 dataset...",
+                    "Building database...",
+                    "Building Langchain ...",
+                    "Getting things ready..."
+                  ];
+                  const progress = (progress_n + 1) / progressMessages.length * 100;
+                  progressBar.style.width = progress + '%';
+                  document.getElementById('loadingMessage').innerText = progressMessages[progress_n];
+                  if (progressMessages.length > progress_n + 1) progress_n++;
+                }
+              });
+          }, 2000);
+        });
+    }
+
+    fetch('/db_status/')
+      .then(response => response.json())
+      .then(data => {
+        console.log(data)
+        if (data.exists) {
+          document.getElementById('container').style = '';
+          document.getElementById('loadingScreen').style = 'display: none!important';
+        } else {
+          document.getElementById('loadingScreen').style.display = '';
+          buildDatabase();
+        }
+      });
+
+    const handleTextInput = () => {
+      const query = document.getElementById('text').value
+
+      document.getElementById('translation').innerText = ''
+
+      if (query === '') {
+        document.getElementById('translation-placeholder').hidden = false
+        return
+      } else {
+        document.getElementById('translation-placeholder').hidden = true
+        document.getElementById('translation-loading').hidden = false
+      }
+
+      fetch('/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `query=${query}`,
+      })
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('translation-loading').hidden = true
+          document.getElementById('translation').innerText = data.translation
+        })
+    }
+
+    const handleTextAreaHeights = () => {
+      const inputArea = document.getElementById('text')
+      const translationArea = document.getElementById('translation-div')
+      const minHeight = 200;
+
+      inputArea.addEventListener('input', () => {
+        inputArea.style.height = minHeight + 'px';
+        inputArea.style.height = Math.max(minHeight, inputArea.scrollHeight, translationArea.scrollHeight) + 'px';
+        translationArea.style.height = minHeight + 'px';
+        translationArea.style.height = Math.max(minHeight, inputArea.scrollHeight, translationArea.scrollHeight) + 'px';
+      });
+    }
+
+    handleTextAreaHeights();
+    document.getElementById('submit-translate').addEventListener('click', handleTextInput);
+  </script>
+</body>
+
+</html>
