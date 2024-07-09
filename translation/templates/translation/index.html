@@ -25,13 +25,15 @@
         <!-- TODO: Clear Button -->
         <p class="text-start px-3 my-2 fw-medium"><u>English</u></p>
         <textarea class="form-control" id="text" placeholder="Enter text here"
-          style="min-height: 200px; max-height:500px; resize: none;"></textarea><br />
+          style="min-height:200px; resize: none;"></textarea><br />
         <button class="btn btn-primary float-end" id="submit-translate">Translate</button>
+        <button class="btn btn-primary float-start" id="clear-text">Clear text</button>
+
       </div>
       <div class="col">
         <p class="text-start px-3 my-2 fw-medium"><u>Malay</u></p>
         <div id="translation-div" class="form-control text-start"
-          style="min-height: 200px; max-height: 500px; resize: none; overflow-y:auto">
+          style="min-height:200px; resize: none; overflow-y:auto">
           <p id="translation-placeholder">Translation</p>
           <div hidden id="translation-loading">
             <div class="spinner-grow spinner-grow-sm mx-1" style="width: 0.8rem; height: 0.8rem;"></div>
@@ -122,16 +124,18 @@
       const inputArea = document.getElementById('text')
       const translationArea = document.getElementById('translation-div')
       const minHeight = 200;
+      const maxHeight = 500;
 
-      inputArea.addEventListener('input', () => {
-        inputArea.style.height = minHeight + 'px';
-        inputArea.style.height = Math.max(minHeight, inputArea.scrollHeight, translationArea.scrollHeight) + 'px';
-        translationArea.style.height = minHeight + 'px';
-        translationArea.style.height = Math.max(minHeight, inputArea.scrollHeight, translationArea.scrollHeight) + 'px';
-      });
+      inputArea.style.height = minHeight + 'px';
+      translationArea.style.height = minHeight + 'px';
+
+      var height = Math.min(maxHeight, Math.max(minHeight, inputArea.scrollHeight, translationArea.scrollHeight));
+
+      inputArea.style.height = height + 'px';
+      translationArea.style.height = height + 'px';
     }
 
-    handleTextAreaHeights();
+    document.getElementById('text').addEventListener('input', handleTextAreaHeights);
     document.getElementById('submit-translate').addEventListener('click', handleTextInput);
   </script>
 </body>
