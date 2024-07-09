@@ -19,8 +19,6 @@ astar_fewshot_template = """
 You are a post-editing translator editing inaccurate translations so that they are accurate.
 Use the examples below to guide your translations. Do not include [Improved Malay] in the final translation.
 
-Examples:
-{examples}
 
 Translate:
 [English]: {eng_input}
@@ -124,10 +122,11 @@ def build_langchain():
 def translate(text: str):
     translated = _astar_translate(text)
 
-    return astar_fewshot_chain.invoke({
+    post_edit_results = astar_fewshot_chain.invoke({
         'eng_input': text,
         'zsm_input': translated
     })
+    return post_edit_results
 
 
 def _astar_translate(text: str):
@@ -140,4 +139,5 @@ def _astar_translate(text: str):
     }
 
     response = post(api_endpoint, headers=headers, json=json)
-    return response.json()['data']['translations'][0]['translatedText']
+
+    return ''.join([x['translatedText'] for x in response.json()['data']['translations']])
